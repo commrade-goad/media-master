@@ -128,7 +128,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "media-master"
+name = "media-play-pause"
 version = "0.1.0"
 dependencies = [
  "mpris",

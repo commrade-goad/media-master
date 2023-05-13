@@ -53,8 +53,10 @@ fn get_player_metadata(player_name: &Player) -> Vec<String> {
             }
         }
     };
-    if data[1].chars().count() < 1 {
-        data[1].push_str(&"Not available");
+    if data.len() < 2 {
+        data.push("Not available".to_string());
+    } else if data[1].chars().count() < 1 {
+        data[1].push_str("Not available");
     }
     return data;
 }
@@ -79,7 +81,7 @@ fn main() {
     let player: Vec<Player> = match connect() {
         Ok(val) => val,
         Err(()) => {
-            println!("ERROR : Cant found any player!");
+            println!("ERROR : Cant connect to Dbus");
             process::exit(1);
         }
     };
