@@ -1,4 +1,4 @@
-# MEDIA-PLAY-PAUSE
+# MEDIA-MASTER
 a Player/media selector for the play-pause function on mpris
 
 ## COMPILE

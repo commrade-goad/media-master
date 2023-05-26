@@ -1,17 +1,22 @@
 use mpris::{MetadataValue, PlaybackStatus, Player, PlayerFinder};
 use rofi;
 use std::process;
+use std::env;
 
-fn connect() -> Result<Vec<Player>, ()> {
+enum ProgramArgs {
+    PlayPause,
+    Loop
+}
+
+fn connect() -> Result<Vec<Player>, String> {
     let player = match PlayerFinder::new() {
-        Err(_) => return Err(()),
+        Err(err) => return Err(err.to_string()),
         Ok(v) => v,
     }
     .find_all();
-    if let Ok(player) = player {
-        return Ok(player);
-    } else {
-        return Err(());
+    match player {
+        Ok(player) => return Ok(player),
+        Err(err) => return Err(err.to_string()),
     }
 }
 
@@ -76,33 +81,82 @@ fn play_pause_player(player: &Player) {
     }
 }
 
+fn player_loop_status(player: &Player){
+    let player_status: mpris::LoopStatus = match player.get_loop_status(){
+        Ok(val) => val,
+        Err(err) => {
+            println!("ERROR: {}", err);
+            process::exit(1);
+        }
+    };
+    match player_status {
+        mpris::LoopStatus::None => player.set_loop_status(mpris::LoopStatus::Track).unwrap(),
+        mpris::LoopStatus::Track => player.set_loop_status(mpris::LoopStatus::Playlist).unwrap(),
+        mpris::LoopStatus::Playlist => player.set_loop_status(mpris::LoopStatus::None).unwrap()
+    };
+}
+
+fn get_args() -> Result<ProgramArgs, ()> {
+    let user_args: Vec<String> = env::args().collect();
+    if user_args.len() < 2 {
+        println!("ERROR : Didnt get any argument!");
+        process::exit(1);
+    }
+    match &user_args[1][..] {
+        "-p" | "--play-pause" => Ok(ProgramArgs::PlayPause),
+        "-l" | "--loop" => Ok(ProgramArgs::Loop),
+        _ => {
+            return Err(())
+        }
+    }
+}
+
 fn main() {
+    let user_args:ProgramArgs = match get_args() {
+        Ok(val) => val,
+        Err(()) =>{
+            println!("ERROR : Invalid argument!");
+            process::exit(1)
+        }
+    };
     let mut data: Vec<String> = Vec::new();
     let player: Vec<Player> = match connect() {
         Ok(val) => val,
-        Err(()) => {
-            println!("ERROR : Cant connect to Dbus");
+        Err(err) => {
+            println!("ERROR : {err}");
             process::exit(1);
         }
     };
     for n in 0..player.len() {
         let player_metadata: Vec<String> = get_player_metadata(&player[n]);
         let mut status_icon: String = String::new();
-        let selected_player_status = match player[n].get_playback_status() {
+        let mut loop_status_icon: String = String::new();
+        let individual_player_status = match player[n].get_playback_status() {
             Ok(val) => val,
             Err(err) => {
                 println!("ERROR : {}", err);
                 process::exit(1);
             }
         };
-        match selected_player_status {
+        let individual_player_loop_status: Result<mpris::LoopStatus, ()> = match player[n].get_loop_status(){
+            Ok(val) => Ok(val),
+            Err(_) => Err(()),
+        };
+        match individual_player_status {
             PlaybackStatus::Paused => status_icon.push_str(""),
             PlaybackStatus::Playing => status_icon.push_str(""),
             PlaybackStatus::Stopped => status_icon.push_str("󰄮"),
         }
+        match individual_player_loop_status {
+            Ok(mpris::LoopStatus::Track) => loop_status_icon.push_str("󰓦"),
+            Ok(mpris::LoopStatus::Playlist) => loop_status_icon.push_str(" 󰓦"),
+            Ok(mpris::LoopStatus::None) => loop_status_icon.push_str("󰓨"),
+            Err(_) => loop_status_icon.push_str("x"),
+        }
         data.push(format!(
-            "{} {} - {} ({})",
+            "{} {} {} - {} ({})",
             status_icon,
+            loop_status_icon,
             player_metadata[0],
             player_metadata[1],
             player[n].bus_name_player_name_part().to_string()
@@ -116,5 +170,8 @@ fn main() {
             process::exit(1);
         }
     };
-    play_pause_player(&player[user_choice]);
+    match user_args {
+        ProgramArgs::Loop => player_loop_status(&player[user_choice]),
+        ProgramArgs::PlayPause => play_pause_player(&player[user_choice]),
+    }
 }
