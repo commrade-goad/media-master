@@ -127,6 +127,13 @@ fn main() {
             process::exit(1);
         }
     };
+    if player.len() == 1 {
+        match user_args{
+            ProgramArgs::Loop => player_loop_status(&player[0]),
+            ProgramArgs::PlayPause => play_pause_player(&player[0]),
+        } 
+        process::exit(0);
+    }
     for n in 0..player.len() {
         let player_metadata: Vec<String> = get_player_metadata(&player[n]);
         let mut status_icon: String = String::new();
