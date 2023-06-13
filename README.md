@@ -7,6 +7,12 @@ $ cargo build --release
 ```
 
 ## USAGE
+- Play-pause : 
 ```
-$ ./target/release/media-play-pause
+$ ./target/release/media-master -p
+```
+
+- Loop Toggle : 
+```
+$ ./target/release/media-master -l
 ```
