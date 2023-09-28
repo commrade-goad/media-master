@@ -111,6 +111,11 @@ fn get_args() -> Result<ProgramArgs, ()> {
     }
 }
 
+fn get_player_name(active_player : &Player) -> String{
+    let player_string: String = active_player.bus_name_player_name_part().to_string();
+    return player_string;
+}
+
 fn main() {
     let user_args:ProgramArgs = match get_args() {
         Ok(val) => val,
@@ -166,7 +171,7 @@ fn main() {
             loop_status_icon,
             player_metadata[0],
             player_metadata[1],
-            player[n].bus_name_player_name_part().to_string()
+            get_player_name(&player[n])
         ));
     }
 
