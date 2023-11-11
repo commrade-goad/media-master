@@ -132,7 +132,10 @@ fn main() {
             process::exit(1);
         }
     };
-    if player.len() == 1 {
+    if player.len() == 0 {
+        println!("ERROR : No player detected!");
+        process::exit(1);
+    } else if player.len() == 1 {
         match user_args{
             ProgramArgs::Loop => player_loop_status(&player[0]),
             ProgramArgs::PlayPause => play_pause_player(&player[0]),
